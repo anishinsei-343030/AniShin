@@ -148,22 +148,55 @@ class DetailScreen extends ConsumerWidget {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final ep = episodes[index];
+                    final watchEntry = ref.watch(watchHistoryProvider)
+                        .where((w) => w.episodeId == ep.id)
+                        .firstOrNull;
+                    final progress = watchEntry?.duration != null &&
+                            watchEntry!.duration!.inMilliseconds > 0
+                        ? (watchEntry.progress.inMilliseconds /
+                                watchEntry.duration!.inMilliseconds)
+                            .clamp(0.0, 1.0)
+                        : 0.0;
+
                     return ListTile(
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: CachedNetworkImage(
-                          imageUrl: ep.image ?? '',
-                          width: 80,
-                          height: 45,
-                          fit: BoxFit.cover,
-                        ),
+                      leading: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: CachedNetworkImage(
+                              imageUrl: ep.image ?? '',
+                              width: 80,
+                              height: 45,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          if (progress > 0)
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: 3,
+                                backgroundColor: Colors.white24,
+                              ),
+                            ),
+                        ],
                       ),
                       title: Text(
                         'Episode ${ep.number.toInt()}',
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
-                      subtitle:
-                          ep.title != null ? Text(ep.title!) : null,
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (ep.title != null) Text(ep.title!),
+                          if (watchEntry != null && watchEntry.isCompleted)
+                            const Text('Completed',
+                                style: TextStyle(
+                                    color: Colors.green, fontSize: 12)),
+                        ],
+                      ),
                       trailing: const Icon(Icons.play_circle_outline),
                       onTap: () => context.push(
                         '/watch/${anime.id}/${ep.id}?title=${Uri.encodeComponent(anime.title)}&image=${Uri.encodeComponent(anime.image ?? '')}&ep=${ep.number.toInt()}',
