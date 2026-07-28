@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/settings/screens/settings_screen.dart';
+import 'services/storage_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  runApp(const ProviderScope(child: AnimeApp()));
+
+  final prefs = await SharedPreferences.getInstance();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPrefsProvider.overrideWithValue(prefs),
+      ],
+      child: const AnimeApp(),
+    ),
+  );
 }
 
 class AnimeApp extends ConsumerWidget {
@@ -20,7 +32,7 @@ class AnimeApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'AnimeApp',
+      title: 'AniShin',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

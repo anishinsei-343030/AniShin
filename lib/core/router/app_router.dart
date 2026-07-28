@@ -53,10 +53,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/watch',
+        path: '/watch/:animeId/:episodeId',
         builder: (context, state) => PlayerScreen(
-          episodeId: state.uri.queryParameters['episodeId']!,
+          animeId: state.pathParameters['animeId']!,
+          episodeId: state.pathParameters['episodeId']!,
           animeTitle: state.uri.queryParameters['title'],
+          animeImage: state.uri.queryParameters['image'],
+          episodeNumber: double.tryParse(state.uri.queryParameters['ep'] ?? '') ?? 1,
         ),
       ),
     ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import '../../../services/storage_service.dart';
 import '../../../providers/anime_repository.dart';
 
 class DetailScreen extends ConsumerWidget {
@@ -16,11 +17,34 @@ class DetailScreen extends ConsumerWidget {
 
     return Scaffold(
       body: animeAsync.when(
-        data: (anime) => CustomScrollView(
+        data: (anime) {
+          final isFav = ref.watch(favoritesProvider).any((f) => f.id == anime.id);
+
+          return CustomScrollView(
           slivers: [
             SliverAppBar(
               expandedHeight: 250,
               pinned: true,
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? Colors.red : null,
+                  ),
+                  onPressed: () {
+                    ref.read(favoritesProvider.notifier).toggle(
+                      FavoriteEntry(
+                        id: anime.id,
+                        title: anime.title,
+                        image: anime.image,
+                        score: anime.score,
+                        episodes: anime.episodes,
+                        addedAt: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                      ),
+                    );
+                  },
+                ),
+              ],
               flexibleSpace: FlexibleSpaceBar(
                 background: CachedNetworkImage(
                   imageUrl: anime.cover ?? anime.image ?? '',
@@ -142,7 +166,7 @@ class DetailScreen extends ConsumerWidget {
                           ep.title != null ? Text(ep.title!) : null,
                       trailing: const Icon(Icons.play_circle_outline),
                       onTap: () => context.push(
-                        '/watch?episodeId=${ep.id}&title=${Uri.encodeComponent(anime.title)}',
+                        '/watch/${anime.id}/${ep.id}?title=${Uri.encodeComponent(anime.title)}&image=${Uri.encodeComponent(anime.image ?? '')}&ep=${ep.number.toInt()}',
                       ),
                     );
                   },
@@ -157,8 +181,9 @@ class DetailScreen extends ConsumerWidget {
               ),
             ),
           ],
-        ),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        );
+      },
+      error: (e, _) => Center(child: Text('Error: $e')),
         loading: () => const Center(child: CircularProgressIndicator()),
       ),
     );
